@@ -4,7 +4,7 @@
 		module="scala-stream-kafka-test$sources_2.11"
 		revision="1.0"
 		status="integration"
-		publication="20160621133303"
+		publication="20160621135123"
 	/>
 	<configurations>
 		<conf name="default" visibility="public" description=""/>

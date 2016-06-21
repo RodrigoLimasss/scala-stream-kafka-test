@@ -4,7 +4,7 @@
 		module="scala-stream-kafka-test_2.11"
 		revision="1.0"
 		status="integration"
-		publication="20160621133303"
+		publication="20160621135106"
 	>
 		<description>
 		scala-stream-kafka-test
@@ -34,5 +34,6 @@
 	<dependencies>
 		<dependency org="org.scala-lang" name="scala-compiler" rev="2.11.8" conf="scala-tool->default,optional(default)"/>
 		<dependency org="org.scala-lang" name="scala-library" rev="2.11.8" conf="scala-tool->default,optional(default);compile->default(compile)"/>
+		<dependency org="com.typesafe.akka" name="akka-stream-kafka_2.11" rev="0.11-M3" conf="compile->default(compile)"/>
 	</dependencies>
 </ivy-module>
