@@ -13,13 +13,16 @@ object InitializerActor {
 
 class InitializerActor extends Actor{
 
-  private var producerActor: ActorRef = _
-  private var consumerActor: ActorRef = _
+  //private var producerActor: ActorRef = _
+  //private var consumerActor: ActorRef = _
 
   override def preStart: Unit = {
-    producerActor = context.actorOf(ProducerActor.props, "producer-actor")
-    consumerActor = context.actorOf(ConsumerActor.props, "consumer-actor")
+    context.actorOf(ConsumerActor.props, "consumer-actor")
   }
 
-  def receive: Receive = ???
+  def receive: Receive = {
+    case ConsumerStarted =>
+      println("Consumer Initialized")
+      context.actorOf(ProducerActor.props, "producer-actor")
+  }
 }
