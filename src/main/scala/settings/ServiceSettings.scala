@@ -6,10 +6,9 @@ package settings
 
 import akka.actor.ActorSystem
 import akka.event.{Logging, LoggingAdapter}
-import akka.kafka.{ConsumerSettings, ProducerSettings}
 import akka.stream.ActorMaterializer
-import org.apache.kafka.clients.consumer.ConsumerConfig
-import org.apache.kafka.common.serialization.{StringDeserializer, ByteArrayDeserializer, StringSerializer, ByteArraySerializer}
+import com.softwaremill.react.kafka.{ConsumerProperties, ProducerProperties, ReactiveKafka}
+import org.apache.kafka.common.serialization.{StringDeserializer, StringSerializer}
 
 trait ServiceSettings {
   implicit val actorSystem: ActorSystem = ActorSystem("stream-kafka-system")
@@ -18,15 +17,22 @@ trait ServiceSettings {
   implicit val materializer: ActorMaterializer = ActorMaterializer()
 
   private val kafkaHost = "10.152.20.213:9092"
+  private val topic = "test"
 
-  val producerSettings = ProducerSettings(actorSystem, new ByteArraySerializer, new StringSerializer)
-    .withBootstrapServers(kafkaHost)
+  val producerSettings = ProducerProperties(
+    bootstrapServers = kafkaHost,
+    topic = topic,
+    valueSerializer = new StringSerializer()
+  )
 
-  val consumerSettings = ConsumerSettings(actorSystem, new ByteArrayDeserializer, new StringDeserializer, Set("test"))
-    .withBootstrapServers(kafkaHost)
-    .withGroupId("test")
-    .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
+  val consumerSettings = ConsumerProperties(
+    bootstrapServers = kafkaHost,
+    topic = topic,
+    groupId = "groupName",
+    valueDeserializer = new StringDeserializer()
+  ).readFromEndOfStream()
 
+  val kafka = new ReactiveKafka()
 
 }
 

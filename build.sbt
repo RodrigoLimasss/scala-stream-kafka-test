@@ -5,4 +5,4 @@ version := "1.0"
 scalaVersion := "2.11.8"
 
 
-libraryDependencies += "com.typesafe.akka" %% "akka-stream-kafka" % "0.11-M3"
+libraryDependencies += "com.softwaremill.reactivekafka" %% "reactive-kafka-core" % "0.10.0"

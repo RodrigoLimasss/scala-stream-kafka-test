@@ -1,14 +1,15 @@
+package actors
+
 /**
   * Created by rodrigolimasss on 21/06/2016.
   */
 
-package actors
-
-import akka.actor.{Props, Actor}
-import akka.kafka.ProducerMessage
-import akka.kafka.scaladsl.Producer
-import akka.stream.scaladsl.Source
-import org.apache.kafka.clients.producer.ProducerRecord
+import akka.actor.{ActorRef, Props, Actor}
+import akka.stream.OverflowStrategy
+import akka.stream.scaladsl.{Sink, Source}
+import com.softwaremill.react.kafka.KafkaMessages._
+import com.softwaremill.react.kafka.ProducerMessage
+import org.reactivestreams.Subscriber
 
 object ProducerActor {
 
@@ -19,20 +20,37 @@ class ProducerActor extends Actor {
 
   import settings.ServiceSettings._
 
-  override def preStart = {
-    Source(1 to 10000)
-      .map(elem => ProducerMessage.Message(new ProducerRecord[Array[Byte], String]("test", elem.toString), elem))
-      .via(Producer.flow(producerSettings))
-      .map { result =>
-        val record = result.message.record
-        println(s"${record.topic}/${record.partition} ${result.offset}: ${record.value} (${result.message.passThrough}")
-        result
-      }
+  private var publisher: ActorRef = _
 
-    println("Producer Started")
+  override def preStart = {
+    initProducer()
+    println("\n * \n * Producer Started \n * \n")
+
+    self ! StartSending
   }
 
   def receive: Receive = {
+    case StartSending => sendingMessages()
     case msg => println(s"[${self.path.name}]: UNKNOWN MESSAGE: $msg FROM ${sender.path}")
   }
+
+  def initProducer(): Unit = {
+
+    val subscriber: Subscriber[StringProducerMessage] = kafka.publish(producerSettings)
+
+    publisher = Source
+      .actorRef(10000, OverflowStrategy.dropHead)
+      .to(Sink.fromSubscriber(subscriber))
+      .run()
+  }
+
+  def sendingMessages() = {
+    Range(0, 10000).foreach(x => {
+      Thread.sleep(x)
+      println("Producer Message: " + x)
+      publisher ! ProducerMessage(x.toString)
+    })
+  }
 }
+
+object StartSending

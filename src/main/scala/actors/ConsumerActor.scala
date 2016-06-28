@@ -5,8 +5,11 @@ package actors
   */
 
 import akka.actor.{Props, Actor}
-import akka.kafka.scaladsl.Consumer
-import scala.concurrent.Future
+import akka.stream.OverflowStrategy
+import akka.stream.scaladsl.Source
+import com.softwaremill.react.kafka.KafkaMessages.StringConsumerRecord
+import com.softwaremill.react.kafka.ProducerMessage
+import org.reactivestreams.Publisher
 import settings.ServiceSettings._
 
 object ConsumerActor {
@@ -17,27 +20,31 @@ object ConsumerActor {
 class ConsumerActor extends Actor {
 
   override def preStart = {
-
-    Consumer.atMostOnceSource(consumerSettings.withClientId("client1"))
-      .mapAsync(1)(record => ConsumerReceiver.printInWindow(record.value))
-
-    self ! ConsumerStarted
+    initConsumer()
+    println("\n * \n * Consumer Started \n * \n")
+    context.parent ! ConsumerStarted
   }
 
   def receive: Receive = {
-    case ConsumerStarted => context.parent ! ConsumerStarted
+    case pMsg: ProducerMessage[Array[Byte], String] => printInWindow(pMsg)
     case msg => println(s"[${self.path.name}]: UNKNOWN MESSAGE: $msg FROM ${sender.path}")
+  }
+
+  def initConsumer(): Unit = {
+
+    val publisher: Publisher[StringConsumerRecord] = kafka.consume(consumerSettings)
+
+    Source
+      .fromPublisher(publisher)
+      .buffer(10000, OverflowStrategy.dropHead)
+      .map(m => ProducerMessage(m.value().toUpperCase))
+      .runForeach(self ! _)
+  }
+
+  def printInWindow(msg: ProducerMessage[Array[Byte], String]): Unit = {
+    println(s"Consumer Message: ${msg.value}")
   }
 
 }
 
 case object ConsumerStarted
-
-object ConsumerReceiver {
-
-  def printInWindow(msg: String): Future[String] = {
-    println(s"Message: ${msg}")
-
-    Future("OK")
-  }
-}
