@@ -9,7 +9,10 @@ import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Sink, Source}
 import com.softwaremill.react.kafka.KafkaMessages._
 import com.softwaremill.react.kafka.ProducerMessage
+import models.{Protocols, Person}
 import org.reactivestreams.Subscriber
+import play.api.libs.json.Json
+
 
 object ProducerActor {
 
@@ -48,7 +51,7 @@ class ProducerActor extends Actor {
     Range(0, 10000).foreach(x => {
       Thread.sleep(x)
       println("Producer Message: " + x)
-      publisher ! ProducerMessage(x.toString)
+      publisher ! ProducerMessage(Json.stringify(Json.toJson(Person(x, "Rodrigo", 27, 1.70))(Protocols.formatPerson)))
     })
   }
 }

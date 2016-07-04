@@ -9,7 +9,9 @@ import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.Source
 import com.softwaremill.react.kafka.KafkaMessages.StringConsumerRecord
 import com.softwaremill.react.kafka.ProducerMessage
+import models.Protocols
 import org.reactivestreams.Publisher
+import play.api.libs.json.Json
 import settings.ServiceSettings._
 
 object ConsumerActor {
@@ -37,12 +39,13 @@ class ConsumerActor extends Actor {
     Source
       .fromPublisher(publisher)
       .buffer(10000, OverflowStrategy.dropHead)
-      .map(m => ProducerMessage(m.value().toUpperCase))
+      .map(m => ProducerMessage(m.value.toString))
       .runForeach(self ! _)
   }
 
   def printInWindow(msg: ProducerMessage[Array[Byte], String]): Unit = {
-    println(s"Consumer Message: ${msg.value}")
+    val obj = Json.fromJson(Json.parse(msg.value))(Protocols.formatPerson).get
+    println(s"${obj.id} - ${obj.name} - ${obj.age} - ${obj.height} ")
   }
 
 }
